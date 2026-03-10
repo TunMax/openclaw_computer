@@ -8,7 +8,7 @@
 - 🚀 开箱即用的 OpenClaw，默认配置 ModelScope 免费模型推理后端，提供密钥即可畅玩
 
 ## 重要提醒
-使用本容器时，请勿部署内网穿透相关服务，根据有关反馈和真实案例，HuggingFace Spaces 具备检测容器内是否运行内网穿透服务的能力，一旦检测到此类情况，容器将会被立即删除，相关账号也会面临被封禁的风险。对于 ModelScope Spaces 也请勿运行内网穿透相关服务，以降低有关风险。本容器仅用于 OpenClaw 的体验。
+使用本容器时，请勿部署内网穿透相关服务，根据有关反馈和真实案例，HuggingFace Spaces 具备检测容器内是否运行内网穿透服务的能力，一旦检测到此类情况，容器将会被立即删除，相关账号也会面临被封禁的风险。对于 ModelScope Spaces 也请勿运行内网穿透相关服务。本容器仅用于 OpenClaw 的体验。
 
 ## 运行容器（ModelScope/HuggingFace Spaces）
 
