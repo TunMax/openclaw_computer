@@ -79,4 +79,7 @@ docker run -d \
 1. OpenClaw 升级到最新的 2026.3.12 版本
 2. 新增 copaw_computer 版本，docker 镜像使用 ghcr.io/tunmax/openclaw_computer:copaw_latest
 
+#### 2026-03-14
+1. 优化容器启动流程，避免因 openclaw 配置错误导致容器关闭，进而无法进入桌面环境排查问题
+
 Made with ❤️ by 百泽匠人
