@@ -29,22 +29,44 @@ docker run -d \
 
 ## 容器特性介绍
 1. 容器支持自动备份/恢复 OpenClaw 配置及部分预定义文件夹，具体包括：OpenClaw 配置目录（`/root/.openclaw`）、电脑桌面目录（`/root/Desktop`）、Codex 配置目录（`/root/.codex`）、Claude Code 配置目录（`/root/.claude`）、用户自定义启动脚本目录（`/root/bz-startup`）、zsh 历史记录文件（`/root/.zsh_history`）
-    1. 在 ModelScope 部署时，容器默认启用自动备份/恢复特性，相关备份内容会实时自动同步到 `/mnt/workspace` 目录下（该路径是 ModelScope 特供的持久化储存目录），容器重启时自动从此目录下读取并恢复相关备份文件。但需要注意，同一账号下的不同创空间的 `/mnt/workspace` 目录内容并不相通，所以自动备份/恢复功能的应用范围仅限该创空间自身。
-    2. 容器还提供利用 **S3 远程储存** 的通用自动备份/恢复特性，实现在 ModelScope、HuggingFace 或本地部署时 OpenClaw 的配置均能无缝同步衔接，使用该特性时需要设置 `S3_XXX` 相关环境变量，具体见下文的环境变量配置。如果你还没有 S3 远程储存空间，推荐使用中国科学院提供的一项云存储服务「数据胶囊」（[https://data.cstcloud.cn](https://data.cstcloud.cn)）,实名认证后即可获得一个 20GB 的免费储存空间，并支持 S3/WebDAV 协议的访问。
+    1. 在 ModelScope 部署时，容器默认启用自动备份/恢复特性，相关备份内容会实时自动同步到 `/mnt/workspace` 目录下（该路径是 ModelScope 特供的持久化存储目录），容器重启时自动从此目录下读取并恢复相关备份文件。但需要注意，同一账号下的不同创空间的 `/mnt/workspace` 目录内容并不相通，所以自动备份/恢复功能的应用范围仅限该创空间自身。
+    2. 容器还提供利用 **S3/WebDAV 远程存储** 的通用自动备份/恢复特性，实现在 ModelScope、HuggingFace 或本地部署时 OpenClaw 的配置均能无缝同步衔接，使用该特性时需要设置 `S3_XXX`/`WEBDAV_XXX` 相关环境变量，具体见下文的环境变量配置。如果你还没有 S3/WebDAV 远程存储空间，推荐使用中国科学院提供的一项云存储服务「数据胶囊」（[https://data.cstcloud.cn](https://data.cstcloud.cn)）,实名认证后即可获得一个 20GB 的免费存储空间，并支持 S3/WebDAV 协议的访问。
 2. 容器支持自定义启动脚本，便于在重启时拉起/配置相关服务，相关脚本代码需写在 `/root/bz-startup/main.sh` 文件中
 
 ## 环境变量配置
+
+### 基础配置
 
 | 变量名 | 必填 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `ROOT_PASSWD` | 否 | `123456` | root 用户密码，长时间未使用系统自动锁屏时需输入此密码解锁 |
 | `MODELSCOPE_API_KEY` | 否 | `not_set_yet` | ModelScope API 密钥，用于 OpenClaw 模型服务，未设置时其将无法正常工作 |
+
+### 进阶配置
+
+| 变量名 | 必填 | 默认值 | 说明 |
+|--------|------|--------|------|
 | `SKIP_RESTORE` | 否 | `0` | 当该值设置为 `1` 时，容器将以纯净模式启动。在此模式下，容器启动时不会自动恢复 OpenClaw 历史配置、不会启用相关目录的自动备份功能以及停止执行用户自定义的启动脚本 |
-| `S3_BUCKET` | 否 | `空值` | S3 远程储存的桶名 Bucket。当该值非空时，容器将启用 S3 远程储存的通用自动备份/恢复特性 |
-| `S3_KEY_ID` | 否 | `空值` | S3 远程储存的 AccessKey ID |
-| `S3_ACCESS_KEY` | 否 | `空值` | S3 远程储存的 AccessKey Secret |
-| `S3_ENDPOINT` | 否 | `https://s3.cstcloud.cn` | S3 远程储存的接入点 Endpoint，默认值是中国科技院[「数据胶囊」](https://data.cstcloud.cn)服务的 S3 协议接入点 |
-| `S3_BACKUP_PATH` | 否 | `backups/data.tar.gz` | S3 远程储存的备份路径，设置不同备份路径可以区分备份版本，并选择从指定备份版本中恢复配置。例如，可设置：`backups/data_version_1.tar.gz`、`user1/data.tar.gz`、`user2/data.tar.gz` |
+| `VNC_PASSWD` | 否 | `空值` | VNC连接密码，当该值被设置时，容器启动后需要输入此密码才能进入桌面 |
+
+### 通用自动备份/恢复配置
+#### S3 远程存储
+| 变量名 | 必填 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `S3_BUCKET` | 否 | `空值` | S3 远程存储的桶名 Bucket。当该值非空时，容器将启用 S3 远程存储的通用自动备份/恢复特性 |
+| `S3_KEY_ID` | 否 | `空值` | S3 远程存储的 AccessKey ID |
+| `S3_ACCESS_KEY` | 否 | `空值` | S3 远程存储的 AccessKey Secret |
+| `S3_ENDPOINT` | 否 | `https://s3.cstcloud.cn` | S3 远程存储的接入点 Endpoint，默认值是中国科技院[「数据胶囊」](https://data.cstcloud.cn)服务的 S3 协议接入点 |
+| `S3_BACKUP_PATH` | 否 | `backups/data.tar.gz` | S3 远程存储的备份路径，设置不同备份路径可以区分备份版本，并选择从指定备份版本中恢复配置。例如，可设置：`backups/data_version_1.tar.gz`、`user1/data.tar.gz`、`user2/data.tar.gz` |
+
+#### WebDAV 远程存储
+| 变量名 | 必填 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `WEBDAV_URL` | 否 | `空值` | WebDAV 服务地址。当该值非空时，容器将启用 WebDAV 远程存储的通用自动备份/恢复特性 |
+| `WEBDAV_USER` | 否 | `空值` | WebDAV 服务用户名 |
+| `WEBDAV_PASSWD` | 否 | `空值` | WebDAV 服务密码 |
+| `WEBDAV_CLIENT_UA` | 否 | `Zotero/8.0` | 连接 WebDAV 服务的 UA 标头，默认值是中国科技院[「数据胶囊」](https://data.cstcloud.cn)服务限定允许接入的客户端 UA 标头 |
+| `WEBDAV_BACKUP_PATH` | 否 | `backups/data.tar.gz` | WebDAV 远程存储的备份路径，设置不同备份路径可以区分备份版本，并选择从指定备份版本中恢复配置。例如，可设置：`backups/data_version_1.tar.gz`、`user1/data.tar.gz`、`user2/data.tar.gz` |
 
 
 ## 使用技巧
@@ -64,13 +86,20 @@ docker run -d \
 
 **升级操作说明**：ModelScope 已经部署容器的用户，需要在创空间“设置”处点击“深度重启”，然后才会自动拉取最新的容器镜像并部署。
 
+#### 2026-03-24
+1. 支持 WebDAV 远程存储的通用自动备份/恢复特性
+2. 支持自定义配置 VNC 连接密码
+3. 内置应用新增 Ark 压缩包管理工具
+4. OpenClaw 升级到最新的 2026.3.23 版本
+5. Chrome 浏览器升级至最新的 146.0.7680.164 版本
+
 #### 2026-03-22
 1. 修复 `openclaw.json` 存在语法错误导致插件无法正常安装的问题
 2. Chrome 浏览器升级至最新的 146.0.7680.153 版本
 3. CoPaw 版：同步 OpenClaw 版 260321-260322 的更新
 
 #### 2026-03-21
-1. 支持 S3 远程储存的通用自动备份/恢复特性
+1. 支持 S3 远程存储的通用自动备份/恢复特性
 2. 优化实时自动备份执行逻辑
 
 #### 2026-03-16
@@ -111,7 +140,7 @@ docker run -d \
 
 #### 2026-03-08
 1. 现已支持 ModelScope 容器在休眠/重启（含深度重启）后自动恢复 OpenClaw 的配置信息（目录：/root/.openclaw）,不用担心重启后配置可能丢失的问题。同时，以下目录及文件也会自动恢复：桌面目录（/root/Desktop）、zsh 历史记录文件（/root/.zsh_history）  
-**实现原理**：系统会利用 `inotifywait` 命令实时监控上述文件夹及文件的变化，当发生变化时，会立即使用 `rsync` 命令将最新版本的文件同步到 ModelScope 的 `/mnt/workspace` 持久化储存路径下；而在系统刚启动时，会检查 `/mnt/workspace` 目录下是否存在可恢复的文件夹及文件，如果存在则会执行恢复操作，恢复完成后才会启动 openclaw gateway
+**实现原理**：系统会利用 `inotifywait` 命令实时监控上述文件夹及文件的变化，当发生变化时，会立即使用 `rsync` 命令将最新版本的文件同步到 ModelScope 的 `/mnt/workspace` 持久化存储路径下；而在系统刚启动时，会检查 `/mnt/workspace` 目录下是否存在可恢复的文件夹及文件，如果存在则会执行恢复操作，恢复完成后才会启动 openclaw gateway
 2. OpenClaw 升级到最新的 2026.3.7 版本
 3. 压缩减小了镜像体积
 
