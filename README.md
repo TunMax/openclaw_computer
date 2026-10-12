@@ -1,359 +1,473 @@
 # openclaw_computer
 
-一个预装 OpenClaw 并具有桌面环境的 Linux 容器，适配 ModelScope、HuggingFace 等免费容器部署服务，通过浏览器即可在安全的隔离环境下畅玩 OpenClaw
+> 🖥️ 一个预装 [OpenClaw](https://docs.openclaw.ai/zh-CN) 的浏览器桌面容器：部署后打开网页就是一台中文 Linux 云电脑，填入免费的 ModelScope 访问令牌即可开始畅玩。
 
-## 通过本项目，你将获得：
-- 💻 一台硬件配置至少为2核/16GB内存的 Linux 云电脑（在 ModelScope/HuggingFace 开源社区部署时）
-- ✨ 具有类 Windows 桌面的系统操作环境，预装 Chrome 浏览器 / 中文拼音输入法，轻松易上手
-- 🚀 开箱即用的 OpenClaw，默认配置 ModelScope 免费模型推理后端，提供密钥即可畅玩
-- 🧪 在安全的隔离环境中尽情体验 OpenClaw
-- 🔄 OpenClaw 配置文件自动备份/恢复
+**适配环境**：ModelScope 创空间（免费 2 核 16GB）· HuggingFace Spaces（`hf_edition` 镜像）· 本地 Docker · 其他 Docker 云平台
 
-## 运行容器（ModelScope/HuggingFace Spaces）
+**快速导航**：[你会得到什么](#-你会得到什么) ｜ [快速开始](#-快速开始) ｜ [进入桌面先玩这 5 件事](#-进入桌面后先玩这-5-件事) ｜ [环境变量](#-环境变量) ｜ [自动备份与恢复](#-自动备份与恢复) ｜ [进阶玩法](#-进阶玩法) ｜ [路径与端口](#-路径与端口速查) ｜ [常见问题](#-常见问题faq) ｜ [镜像与版本](#-镜像与版本)
 
-#### ModelScope 部署教程：
-- [📝 文字版（点击查看）](https://mp.weixin.qq.com/s/gAQs3Zl9ohkcSFmQcd-Z-Q)
-- [🎬 视频版（点击查看）](https://www.bilibili.com/video/BV1HQwtzuEmw)
-- 切换使用 **QwenPaw 版镜像**：
-    1. 参照上述文字/视频教程完成部署
-    2. 部署后，编辑“空间文件”下的`Dockerfile`文件，将首行代码`FROM ghcr.io/tunmax/openclaw_computer:latest`修改为`FROM ghcr.io/tunmax/openclaw_computer:qwenpaw_latest`，然后在页面底部点击“提交修改”
-    3. 最后，在“设置”中点击“深度重启”即可
-- 切换使用 **Hermes 版镜像**：
-    1. 操作同 **QwenPaw 版镜像** 教程，仅需将`Dockerfile`文件首行最后的`:latest`改为`:hermes_latest`
+---
 
+## 🎁 你会得到什么
 
-#### HuggingFace 部署教程：
-1. 在 Spaces 仓库目录下添加 Dockerfile 文件，内容参考本仓库的 Dockerfile 文件，但首行代码需修改为 `FROM ghcr.io/tunmax/openclaw_computer:hf_edition`
-2. 在“设置”中点击“New secret”按钮创建 `MODELSCOPE_API_KEY` 环境变量，最后点击“Factory rebuild”按钮运行部署即可
-3. （可选）将 Bucket 挂载在 `/mnt/workspace` 路径下可激活本地自动备份/恢复特性；设置环境变量 `PRO_MODE` 的值为 `1` 可启动专业模式，容器会额外启动在线终端和在线文件管理服务，方便排查问题
+| 能力 | 说明 |
+| --- | --- |
+| 🖥️ **浏览器里的云电脑** | KDE Plasma 中文桌面，基于 TigerVNC + noVNC，打开网页自动连接，无需安装任何客户端 |
+| 🤖 **开箱即用的 OpenClaw** | 默认接入 ModelScope 免费推理模型，只需提供一个访问令牌 |
+| 🌐 **Google Chrome** | 启动后自动打开 OpenClaw 控制台，即开即用 |
+| ⌨️ **中文输入法** | Fcitx5 拼音，`Ctrl + Shift` 切换中英文 |
+| 🧰 **常用软件齐全** | Konsole 终端、Dolphin 文件管理器、VS Code、Ark 解压工具、htop、tmux、zsh、croc 等 |
+| 🧠 **内置 Pi Agent** | 桌面图标一键打开 AI 编程助手，默认复用 ModelScope 模型 |
+| 💾 **自动备份 / 恢复** | 支持本地持久化目录、S3、WebDAV 三种后端，实时监听文件变化并同步 |
+| 🧹 **纯净模式** | 一条环境变量即可跳过恢复与备份，专治「配置错误起不来」 |
 
-## 运行容器（本地环境）
+> 桌面规格：**1920×1080 · 24 位色 · Asia/Shanghai 时区 · zh_CN.UTF-8 · KDE 特效已关闭（流畅优先）**
+>
+> ℹ️ 以上为 `latest` 主镜像的体验；HuggingFace 部署使用 `hf_edition`，默认以无桌面模式运行，详见「快速开始 · 方式二」。
+
+---
+
+## 🚀 快速开始
+
+### 方式一：ModelScope 创空间（推荐，免费）
+
+> 免费获得 2 核 16GB 云电脑，适合绝大多数用户直接体验。
+
+1. 打开 [ModelScope 官网](https://www.modelscope.cn/home) 注册登录，按提示完成阿里云账号绑定与实名认证。
+2. **获取访问令牌**：点击右上角头像 → **账号设置** → **访问控制** → **新建访问令牌**，复制令牌（形如 `ms-xxxxxxxx`）。
+3. 打开创空间 [BrianZhou/openclaw_computer](https://www.modelscope.cn/studios/BrianZhou/openclaw_computer)，点击「**复制创空间**」。
+4. **填写参数**：
+   - **是否公开**：选择「**非公开**」（保护你的桌面隐私，重要）
+   - **ROOT_PASSWD**：自定义桌面锁屏密码
+   - **MODELSCOPE_API_KEY**：粘贴第 2 步复制的令牌
+5. 确认后等待空间构建上线（首次构建需要几分钟）。
+6. 状态变为「运行中」后，点击「**服务地址**」（7860 端口）即可进入桌面，noVNC 会自动连接。
+
+📺 视频教程：[B 站](https://www.bilibili.com/video/BV1HQwtzuEmw)　｜　📝 图文教程：[微信公众号](https://mp.weixin.qq.com/s/gAQs3Zl9ohkcSFmQcd-Z-Q)
+
+> 💡 想自建空间而不复制别人的？见下方「方式四：自建 ModelScope 空间」。
+
+### 方式二：HuggingFace Spaces（hf_edition 镜像）
+
+> HuggingFace 部署请使用专属镜像 `hf_edition`。它默认以**无桌面模式**运行：7860 端口直接提供 OpenClaw 控制台；设置 `PRO_MODE=1` 还会开启在线终端与在线文件管理，方便排查问题。
+
+1. 在 HuggingFace 创建（或打开已有）一个 **Docker** 类型的 Space。
+2. 在 Space 仓库中添加 `Dockerfile`，内容如下：
+
+   ```dockerfile
+   FROM ghcr.io/tunmax/openclaw_computer:hf_edition
+
+   EXPOSE 7860
+
+   ENTRYPOINT ["/entrypoint.sh"]
+   ```
+
+3. 在 Space 的 **Settings → Variables and secrets** 中添加 Secret：`MODELSCOPE_API_KEY` = 你的 ModelScope 访问令牌。
+4. 点击 **Factory rebuild** 重新构建部署。
+5. 构建完成后打开 Space 地址，即可直接使用 OpenClaw 控制台。
+
+**可选配置**（同样在 Variables and secrets 中添加）：
+
+| 变量 | 说明 |
+| --- | --- |
+| `PRO_MODE=1` | 专业模式：额外启动在线终端 `/bzshell` 与在线文件管理 `/bzfiles`（见「进阶玩法 · HuggingFace 专属功能」） |
+| `DISABLE_DESKTOP=0` | 切换为完整 KDE 桌面模式（7860 变为 noVNC 桌面，与主镜像体验一致），仅限本地研究时使用，HF 平台上勿用 |
+| S3 / WebDAV 相关变量 | 启用远程自动备份/恢复（见「自动备份与恢复」） |
+
+> 💡 HuggingFace 提供 Buckets 功能，将 Bucket 挂载到 `/mnt/workspace` 路径即可启用本地自动备份/恢复（与 ModelScope 的 `/mnt/workspace` 逻辑一致）。
+
+### 方式三：本地 Docker
 
 ```bash
-docker run -d \
+docker run -d --name openclaw \
   -p 7860:7860 \
+  -e MODELSCOPE_API_KEY=ms-xxxxxxxx \
   -e ROOT_PASSWD=123456 \
-  -e MODELSCOPE_API_KEY=your_api_key_here \
-  ghcr.io/tunmax/openclaw_computer:latest /entrypoint.sh
+  -v ./openclaw-data:/mnt/workspace \
+  ghcr.io/tunmax/openclaw_computer:latest
 ```
-- 激活自动备份/恢复特性：`docker run ... -v ./backups:/mnt/workspace ...`
-- 使用 QwenPaw 版本：`docker run ... ghcr.io/tunmax/openclaw_computer:qwenpaw_latest`
-- 使用 Hermes 版本：`docker run ... ghcr.io/tunmax/openclaw_computer:hermes_latest`
 
-#### 💡 重要提醒
-在开源社区部署本容器时，请勿启动内网穿透相关服务，根据有关反馈和真实案例，HuggingFace Spaces 具备检测容器内是否运行内网穿透服务的能力，一旦检测到此类情况，容器将会被立即删除，相关账号也会面临被封禁的风险。对于 ModelScope Spaces 也请勿运行内网穿透相关服务。本容器仅用于 OpenClaw 的体验。
+打开 **http://localhost:7860** 即可进入桌面。
 
-## 容器特性介绍
-1. 容器支持自动备份/恢复 OpenClaw 配置及部分预定义文件夹，具体包括：OpenClaw 配置目录（`/root/.openclaw`）、电脑桌面目录（`/root/Desktop`）、Codex 配置目录（`/root/.codex`）、Claude Code 配置目录（`/root/.claude`）、用户自定义启动脚本目录（`/root/bz-startup`）、zsh 历史记录文件（`/root/.zsh_history`）
-    1. 在 ModelScope 部署时，容器默认启用自动备份/恢复特性，相关备份内容会实时自动同步到 `/mnt/workspace` 目录下（该路径是 ModelScope 特供的持久化存储目录），容器重启时自动从此目录下读取并恢复相关备份文件。但需要注意，同一账号下的不同创空间的 `/mnt/workspace` 目录内容并不相通，所以自动备份/恢复功能的应用范围仅限该创空间自身。
-    2. 容器还提供利用 **S3/WebDAV 远程存储** 的通用自动备份/恢复特性，实现在 ModelScope、HuggingFace 或本地部署时 OpenClaw 的配置均能无缝同步衔接，使用该特性时需要设置 `S3_XXX`/`WEBDAV_XXX` 相关环境变量，具体见下文的环境变量配置。如果你还没有 S3/WebDAV 远程存储空间，推荐使用中国科学院提供的一项云存储服务「数据胶囊」（[https://data.cstcloud.cn](https://data.cstcloud.cn)）,实名认证后即可获得一个 20GB 的免费存储空间，并支持 S3/WebDAV 协议的访问。
-2. 容器支持自定义启动脚本，便于在重启时拉起/配置相关服务，相关脚本代码需写在 `/root/bz-startup/main.sh` 文件中
+| 常用操作 | 命令 |
+| --- | --- |
+| 查看启动日志 | `docker logs -f openclaw` |
+| 进入容器终端 | `docker exec -it openclaw bash` |
+| 停止容器 | `docker stop openclaw` |
 
-## 环境变量配置
+> `-v ./openclaw-data:/mnt/workspace` 挂载后即启用**本地自动备份/恢复**，备份会写入 `./openclaw-data/root/`；不挂载则容器重启后数据会丢失。
+
+### 方式四：自建 ModelScope 空间（使用 Dockerfile）
+
+如果你不想复制别人的空间，可以新建一个 Docker 类型的创空间，Dockerfile 内容如下：
+
+```dockerfile
+FROM ghcr.io/tunmax/openclaw_computer:latest
+
+EXPOSE 7860
+
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+然后在空间设置中配置（至少设置 `MODELSCOPE_API_KEY`）即可。
+
+---
+
+## 🎮 进入桌面后，先玩这 5 件事
+
+1. **打开 OpenClaw 控制台** —— 容器启动时 Chrome 会自动打开。如果不小心关掉了，在 Konsole 终端执行：
+   ```bash
+   openclaw dashboard
+   ```
+   它会带着当前 token 重新打开控制台；也可以执行 `openclaw dashboard --no-open` 只打印带 token 的链接。
+2. **切换中英文输入法** —— `Ctrl + Shift`。
+3. **粘贴外部文字** —— 点击屏幕最左侧工具栏的「剪贴板」按钮（第 3 个），输入或粘贴文字后，即可在容器内 `Ctrl + V`。
+4. **查看内置帮助** —— 桌面上的「使用帮助.html」。
+5. **对 OpenClaw 说句话** —— 验证模型是否正常。默认使用 ModelScope 免费模型，若报错请检查 `MODELSCOPE_API_KEY` 是否填写正确。
+
+常用命令速查：
+
+```bash
+openclaw gateway --force run   # 重启 Gateway（--force 会先结束旧进程）
+openclaw doctor --fix --yes    # 健康检查并自动修复
+openclaw status                # 查看 Gateway / 渠道 / 模型状态
+openclaw dashboard             # 带 token 打开控制台
+```
+
+---
+
+## ⚙️ 环境变量
 
 ### 基础配置
 
 | 变量名 | 必填 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `ROOT_PASSWD` | 否 | `123456` | root 用户密码，长时间未使用系统自动锁屏时需输入此密码解锁 |
-| `MODELSCOPE_API_KEY` | 否 | `not_set_yet` | ModelScope API 密钥，用于 OpenClaw 模型服务，未设置时其将无法正常工作 |
+| --- | --- | --- | --- |
+| `MODELSCOPE_API_KEY` | ✅ 建议填写 | `not_set_yet` | ModelScope 访问令牌，OpenClaw 与 Pi Agent 的默认模型都依赖它 |
+| `ROOT_PASSWD` | 否 | `123456` | 桌面锁屏密码（长时间未操作自动锁屏时需输入） |
+| `KEEP_ORIGINAL_CONF` | 否 | `1` | `1` = 启动时保留出厂配置副本到 `/root/.openclaw_origin`，便于随时对照或还原 |
+| `SKIP_RESTORE` | 否 | `0` | `1` = **纯净模式**：跳过历史配置恢复、实时备份守护和用户自定义启动脚本（排障神器） |
 
-### 进阶配置
+### 桌面配置
 
 | 变量名 | 必填 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `VNC_PASSWD` | 否 | `无` | VNC连接密码，当该值被设置时，容器启动后需要输入此密码才能进入桌面 |
-| `SKIP_RESTORE` | 否 | `0` | 当该值设置为 `1` 时，容器将以纯净模式启动。在此模式下，容器启动时不会自动恢复 OpenClaw 历史配置、不会启用相关目录的自动备份功能以及停止执行用户自定义的启动脚本 |
-| `KEEP_ORIGINAL_CONF` | 否 | `1` | 容器启动时默认会复制一份镜像自带的 OpenClaw 配置至 `/root/.openclaw_origin` 路径下，便于在 OpenClaw 出现问题时切换回原版配置或与原版配置做对比定位问题 |
-| `PRO_MODE` | 否 | `0` | 该变量仅在 HuggingFace 专属镜像上可用。当该值设置为 `1` 时，容器会启动一个在线命令终端，方便在 OpenClaw 进程崩掉后进行排查和恢复，访问地址为：`https://<用户名-空间名>.hf.space/bzshell`，容器还会启动一个在线文件管理页面，访问地址为：`https://<用户名-空间名>.hf.space/bzfiles` |
+| --- | --- | --- | --- |
+| `VNC_PASSWD` | 否 | 无 | 设置后进入桌面需先输入 VNC 密码；不设置则无需密码 |
+| `VNC_GEOMETRY` | 否 | `1920x1080` | 桌面分辨率 |
+| `VNC_DEPTH` | 否 | `24` | 桌面色深 |
 
-### 通用自动备份/恢复配置
+### HuggingFace 专属（`hf_edition` 镜像）
+
+| 变量名 | 默认值 | 说明 |
+| --- | --- | --- |
+| `PRO_MODE` | `0` | `1` = 专业模式：启动在线终端 `/bzshell` 与在线文件管理 `/bzfiles` 的 url 路径，方便在 OpenClaw 异常时排查恢复 |
+| `DISABLE_DESKTOP` | `1` | `1` = 无桌面模式（默认，7860 直接提供 OpenClaw 控制台）；`0` = 启动完整 KDE 桌面（noVNC） |
+
+### 自动备份 / 恢复
+
+后端选择优先级：**S3 > WebDAV > 本地 `/mnt/workspace`**。
+
 #### S3 远程存储
-| 变量名 | 必填 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `S3_BUCKET` | 否 | `无` | S3 远程存储的桶名 Bucket。当该值非空时，容器将启用 S3 远程存储的通用自动备份/恢复特性 |
-| `S3_KEY_ID` | 否 | `无` | S3 远程存储的 AccessKey ID |
-| `S3_ACCESS_KEY` | 否 | `无` | S3 远程存储的 AccessKey Secret |
-| `S3_ENDPOINT` | 否 | `https://s3.cstcloud.cn` | S3 远程存储的接入点 Endpoint，默认值是中国科技院[「数据胶囊」](https://data.cstcloud.cn)服务的 S3 协议接入点（相关链接：[获取中科院免费 20GB S3 云存储空间教程](https://mp.weixin.qq.com/s/JrR6hc07boc_rgP__cL4-w)） |
-| `S3_BACKUP_PATH` | 否 | `backups/data.tar.gz` | S3 远程存储的备份路径，设置不同备份路径可以区分备份版本，并选择从指定备份版本中恢复配置。例如，可设置：`backups/data_version_1.tar.gz`、`user1/data.tar.gz`、`user2/data.tar.gz` |
-| `BACKUP_ENC_PASS` | 否 | `无` | 备份文件加密密码，当该值被设置时，备份文件传输到远程网络存储前会先被加密，实现端到端加密（E2E）效果 |
+
+| 变量名 | 默认值 | 说明 |
+| --- | --- | --- |
+| `S3_BUCKET` | 无 | 桶名。**非空即启用 S3 备份** |
+| `S3_KEY_ID` | 无 | AccessKey ID |
+| `S3_ACCESS_KEY` | 无 | AccessKey Secret |
+| `S3_ENDPOINT` | `https://s3.cstcloud.cn` | S3 接入点，默认中科院[「数据胶囊」](https://data.cstcloud.cn) |
+| `S3_BACKUP_PATH` | `backups/data.tar.gz` | 备份路径；可用不同路径保存多份备份（如 `user1/data.tar.gz`） |
 
 #### WebDAV 远程存储
-| 变量名 | 必填 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `WEBDAV_URL` | 否 | `无` | WebDAV 服务地址。当该值非空时，容器将启用 WebDAV 远程存储的通用自动备份/恢复特性 |
-| `WEBDAV_USER` | 否 | `无` | WebDAV 服务用户名 |
-| `WEBDAV_PASSWD` | 否 | `无` | WebDAV 服务密码 |
-| `WEBDAV_CLIENT_UA` | 否 | `Zotero/8.0` | 连接 WebDAV 服务的 UA 标头，默认值是中国科技院[「数据胶囊」](https://data.cstcloud.cn)服务限定允许接入的客户端 UA 标头 |
-| `WEBDAV_BACKUP_PATH` | 否 | `backups/data.tar.gz` | WebDAV 远程存储的备份路径，设置不同备份路径可以区分备份版本，并选择从指定备份版本中恢复配置。例如，可设置：`backups/data_version_1.tar.gz`、`user1/data.tar.gz`、`user2/data.tar.gz` |
-| `BACKUP_ENC_PASS` | 否 | `无` | 备份文件加密密码，当该值被设置时，备份文件传输到远程网络存储前会先被加密，实现端到端加密（E2E）效果 |
-
-
-## 使用技巧
-
-- 按 `Ctrl+Shift` 组合键切换中英文输入法
-- 启动后屏幕左侧工具栏可调出剪贴板，在上面输入或粘贴文字后，即可在容器内粘贴
-
-## FAQ
-1. **为什么有时候 ModelScope 的创空间使用起来非常卡？**  
-根据近期的观察，早上时段流畅，晚上时段则易卡顿。因为 ModelScope/HuggingFace 提供的免费 2核16GB 配置硬件是没有 SLA 协议的，即服务级别协议（Service Level Agreement，一般商业付费服务才有，内容主要包括硬件可用性、网络响应性以及发生故障时的修复时限等内容）。ModelScope 提供免费层级的配置应该是根据阿里云闲置资源的实际情况来提供，当高峰期时闲置资源少，就会变卡，低峰期闲置资源多，所以流畅。使用 ModelScope/HuggingFace 付费硬件配置时，因为有 SLA 协议，所以应该是一直流畅的。
-2. **openclaw 配置错误容器无限重启无法启动怎么办？**  
-设置环境变量 `SKIP_RESTORE=1`，此时容器将以纯净模式启动，不会自动恢复 OpenClaw 历史配置、不会启用相关目录的自动备份功能以及停止执行用户自定义的启动脚本。
-3. **为什么 ModelScope（国际版）选择深度重启后镜像还是旧的版本？**  
-这似乎是国际版的 bug，需要删除创空间后重新创建，才会拉取最新的容器镜像。
-4. **如何设置自动备份/恢复 Chrome 浏览器的书签、浏览历史等数据？**  
-由于浏览器数据占用空间比较大，备份及远程传输时可能会很慢，所以没有列为默认备份/恢复目录。但可以通过自定义启动脚本的功能，实现浏览器数据的备份/恢复。以 ModelScope 部署为例，修改脚本文件（/root/bz-startup/main.sh），使其内容如下即可：  
-    ```bash
-    #!/bin/bash
-    
-    # 恢复 Chrome 历史数据
-    rsync -a "/mnt/workspace/chrome/" "/root/.config/google-chrome/Default/"
-    
-    # 每 10 分钟备份一次 Chrome 数据
-    nohup bash -c '
-    while true; do
-        rsync -a --delete "/root/.config/google-chrome/Default/" "/mnt/workspace/chrome/"
-        sleep 600
-    done
-    ' > /dev/null 2>&1 &
-    ```
-
-## 更新日志
 
-**升级操作说明**：ModelScope 已经部署容器的用户，需要在创空间“设置”处点击“深度重启”，然后才会自动拉取最新的容器镜像并部署。
-
-#### 2026-10-11
-1. 使用 Agent 对容器启动脚本代码进行重构，相关代码的设计、组织得到工程化应用，更加健壮且易于维护
-2. 新增内置 [Pi Agent](https://pi.dev/)，一句话概括：简单好用！
-3. 新增 [croc](https://getcroc.com/) 命令，便于在不同电脑间互传文件
-4. OpenClaw 升级至 2026.10.1 版本
-
-#### 2026-10-02
-1. OpenClaw 升级至 2026.9.7 版本
-2. NodeJS 版本升级至 v24.21.0
-
-#### 2026-07-17
-1. OpenClaw 升级至 2026.7.1 版本
-
-#### 2026-06-16
-1. OpenClaw 升级至 2026.6.6 版本
-
-#### 2026-06-04
-1. OpenClaw 升级至 2026.6.1 版本
-2. 默认开启工作板（workboard）功能
-3. 优化 konsole 终端的剪贴板同步逻辑，操作更便捷
-
-#### 2026-06-02
-1. QwenPaw 升级至 1.1.10 版本
-2. Hermes 升级至 0.15.2 版本
-
-#### 2026-05-31
-1. OpenClaw 升级至 2026.5.28 版本
-
-#### 2026-05-22
-1. OpenClaw 升级至 2026.5.20 版本
-2. 首选推理模型切换为 Ring-2.6-1T
-
-#### 2026-05-21
-1. OpenClaw 升级至 2026.5.19 版本
-2. 删除 AGENTS.md/MEMORY.md 中关于规范 openclaw 重启行为的规则，目前 openclaw 自身已能完成优雅重启
-3. 修复 Konsole 终端执行 `openclaw doctor` 等命令时，内容有时会被截断无法完整显示的问题
-
-#### 2026-05-19
-1. OpenClaw 升级至 2026.5.18 版本
-2. 修复 HuggingFace 专属镜像在线终端发送 `Ctrl+C` 终止命令时无效的问题
-3. 在使用云端进行 openclaw 配置恢复时，如果检测到恢复不成功，容器将终止运行并提示用户有关信息
+| 变量名 | 默认值 | 说明 |
+| --- | --- | --- |
+| `WEBDAV_URL` | 无 | 服务地址。**非空即启用 WebDAV 备份**（S3 优先） |
+| `WEBDAV_USER` | 无 | 用户名 |
+| `WEBDAV_PASSWD` | 无 | 密码 |
+| `WEBDAV_CLIENT_UA` | `Zotero/8.0` | 请求 UA 头，数据胶囊服务要求 |
+| `WEBDAV_BACKUP_PATH` | `backups/data.tar.gz` | 备份路径 |
 
-#### 2026-05-18
-1. HuggingFace 专属镜像专业模式下新增在线文件管理功能，访问地址为：`https://<你的空间真实url>/bzfiles`
-
-#### 2026-05-17
-1. HuggingFace 专属镜像新增专业模式，设置环境变量 `PRO_MODE` 为 `1` 时启用，该模式下会启动一个在线终端，访问地址为：`https://<你的空间真实url>/bzshell`
-
-#### 2026-05-16
-1. 新增在 HuggingFace 部署的专属镜像，docker tag 标识为 `hf_edition`
-
-#### 2026-05-15
-OpenClaw 版镜像：
-1. 升级至最新 2026.5.12 版本
-2. 优化中文输入法，提升输入体验
-3. apt/npm/uv 相关包升级至最新
-
-QwenPaw 版镜像：升级至最新 1.1.7 版本，同步 OpenClaw 版优化
+#### 加密
 
-Hermes 版镜像：升级至最新 0.13.0 版本，同步 OpenClaw 版优化
+| 变量名 | 默认值 | 说明 |
+| --- | --- | --- |
+| `BACKUP_ENC_PASS` | 无 | 设置后，备份文件在传输到远端前使用 GPG AES256 加密（端到端加密） |
 
-#### 2026-05-08
+---
 
-OpenClaw 版镜像：
-1. 升级至最新 2026.5.7 版本
+## 💾 自动备份与恢复
 
-#### 2026-05-07
+### 备份哪些内容
 
-OpenClaw 版镜像：
-1. memory_core 配置的本地 embedding 模型切换为 nomic-embed-text-v1.5
-2. 升级至最新 2026.5.6 版本
+| 路径 | 内容 |
+| --- | --- |
+| `/root/.openclaw` | OpenClaw 配置、会话、记忆、工作区 |
+| `/root/Desktop` | 桌面文件 |
+| `/root/bz-startup` | 用户自定义启动脚本 |
+| `/root/.codex` / `/root/.claude` / `/root/.pi` | 各 AI 工具配置 |
+| `/root/.zsh_history` | 终端命令历史 |
 
-QwenPaw 版镜像：
-1. 升级至最新 1.1.5.post2 版本
+自动忽略：`.git`、`.venv`、`venv`、`node_modules`。
 
-#### 2026-05-06
+### 三种后端
 
-OpenClaw 版镜像：
-1. 为 memory_core 配置本地 embedding 模型（bge-small-zh-v1.5），并默认开启 OpenClaw “梦境”功能
-2. 升级至最新 2026.5.4 版本
+| 后端 | 触发条件 | 备份位置 |
+| --- | --- | --- |
+| **S3** | 设置了 `S3_BUCKET` | `S3_BACKUP_PATH` 指定的对象 |
+| **WebDAV** | 设置了 `WEBDAV_URL`（且未设置 S3） | `WEBDAV_BACKUP_PATH` 指定的文件 |
+| **本地** | 容器内存在 `/mnt/workspace` 目录 | `/mnt/workspace/root/` |
 
-#### 2026-05-01
+- ModelScope 创空间自带 `/mnt/workspace` 持久化目录，**默认自动启用本地备份，无需任何配置**。
+- 本地 Docker 需要挂载卷到 `/mnt/workspace` 才会启用。
+- 配置 S3/WebDAV 后，可以在不同平台（如 ModelScope 与本地）之间无缝衔接同一份 OpenClaw 配置。
 
-QwenPaw 版镜像：
-1. 升级至最新 1.1.5.post1 版本
+### 工作方式
 
-Hermes 版镜像：
-1. 升级至最新 0.12.0 版本
+1. **启动恢复**：容器启动时先从备份恢复配置，成功后才启动 OpenClaw Gateway。
+2. **实时备份**：运行中通过 `inotifywait` 监听上述路径，文件变化后延迟 6 秒防抖，打包并同步一次（打包格式：`tar -zcPf`；远端传输使用 `rclone`）。
+3. **失败保护**：已配置远端备份但下载/解包失败时，容器会**终止启动并报错**，避免坏数据覆盖运行环境。
+4. **加密**：设置 `BACKUP_ENC_PASS` 时，先 GPG AES256 加密再上传；恢复时优先按加密解包，并兼容早期未加密备份。
 
-OpenClaw 版镜像：
-- ⚠️ 因最新 2026.4.29 版本存在严重 gateway 阻塞 bug，故暂停升级
+### 手动操作与日志
 
-#### 2026-04-25
-OpenClaw 版镜像：
-1. 升级至最新 2026.4.23 版本
-2. 默认模型修改为 Qwen3.5-122B-A10B，以提供多模态输入支持
+```bash
+/bz/sync_init.sh      # 手动执行一次配置恢复
+/bz/sync_daemon.sh    # 手动启动实时备份守护进程
+/bz/auto_recover.sh   # 恢复 + 执行自定义脚本 + 启动备份守护
+```
 
-QwenPaw 版镜像：
-1. 升级至最新 1.1.4.post1 版本
-2. 默认模型修改为 Qwen3.5-122B-A10B，以提供多模态输入支持
+| 日志 | 路径 |
+| --- | --- |
+| 实时备份守护 | `/tmp/bz-sync-daemon.log` |
+| OpenClaw Gateway | `/tmp/openclaw_gateway.log` |
 
-Hermes 版镜像：
-1. 升级至最新 0.11.0 版本
-2. 默认模型修改为 Qwen3.5-122B-A10B，以提供多模态输入支持
-3. 修复魔搭社区深度重启拉取新镜像后，Hermes 功能升级不完整问题
+---
 
-#### 2026-04-23
-1. OpenClaw 升级至最新 2026.4.21 版本
-2. Chrome 浏览器升级至最新 147.0.7727.116 版本
+## 🧩 进阶玩法
 
-#### 2026-04-22
-1. OpenClaw 升级至最新 2026.4.20 版本
+### 自定义启动脚本
 
-#### 2026-04-18
-1. OpenClaw 升级至最新 2026.4.15 版本
-2. QwenPaw 版镜像：升级至最新 1.1.2 版本
-3. Hermes 版镜像：升级至最新 0.10.0 版本
+把希望在容器每次启动时执行的命令写入 `/root/bz-startup/main.sh`（该目录会自动备份/恢复），适合开机拉起自己的服务。
 
-#### 2026-04-15
-1. OpenClaw 升级至最新 2026.4.14 版本
-2. QwenPaw 版镜像：升级至最新 1.1.1 版本
+### 备份 Chrome 书签 / 浏览历史
 
-#### 2026-04-14
-1. Hermes 版镜像：升级至最新 0.9.0 版本
+Chrome 数据体积较大，不在默认备份范围内，但可以通过自定义启动脚本实现：
 
-#### 2026-04-13
-1. 新增 QwenPaw 版镜像，docker tag 标识为 `qwenpaw_latest`（备注：官方已将 CoPaw 正式更名为 QwenPaw）
-2. 优化 Hermes 版镜像，自动备份时忽略 node_modules 文件夹
+```bash
+#!/bin/bash
 
-#### 2026-04-12
-1. 新增 Hermes 版镜像，docker tag 标识为 `hermes_latest`
-2. OpenClaw 升级至最新 2026.4.11 版本
-3. CoPaw 版：同步 OpenClaw 版 260411 的更新
+# 恢复 Chrome 历史数据
+rsync -a "/mnt/workspace/chrome/" "/root/.config/google-chrome/Default/"
 
-#### 2026-04-11
-1. OpenClaw 升级至最新 2026.4.10 版本
-2. Chrome 浏览器的默认搜索引擎设置为 Bing
+# 每 10 分钟备份一次 Chrome 数据
+nohup bash -c '
+while true; do
+    rsync -a --delete "/root/.config/google-chrome/Default/" "/mnt/workspace/chrome/"
+    sleep 600
+done
+' > /dev/null 2>&1 &
+```
 
-#### 2026-04-10
-1. CoPaw 版：升级至最新 1.0.2 版本、同步 OpenClaw 版 260409 的更新
+### 使用 croc 在不同电脑间传文件
 
-#### 2026-04-09
-1. OpenClaw 升级至最新 2026.4.9 版本
-2. Chrome 浏览器升级至最新 147.0.7727.55 版本
+```bash
+# 发送端（容器内）
+croc send 文件名
 
-#### 2026-04-06
-1. OpenClaw 升级至最新 2026.4.5 版本
-2. CoPaw 版：升级至最新 1.0.1 版本
+# 接收端（另一台电脑，需先安装 croc）
+croc <发送端生成的代码>
+```
 
-#### 2026-04-03
-1. OpenClaw 升级至最新 2026.4.2 版本
+### 恢复出厂配置
 
-#### 2026-04-02
-1. 通过远程网络存储备份时，新增支持 E2E 加密功能（设置 `BACKUP_ENC_PASS` 环境变量开启）
-2. OpenClaw 升级至最新 2026.4.1 版本
-3. CoPaw 版：升级至最新 1.0.0.post3 版本
+当 OpenClaw 配置被改乱时，可以使用启动时保留的出厂副本：
 
-#### 2026-04-01
-1. OpenClaw 升级至最新 2026.3.31 版本
-2. Chrome 浏览器升级至最新 146.0.7680.177 版本
-3. CoPaw 版：升级至最新 1.0.0.post2 版本
+```bash
+mv /root/.openclaw /root/.openclaw.broken      # 保留现场
+cp -a /root/.openclaw_origin /root/.openclaw   # 还原出厂配置
+openclaw gateway --force run                   # 重启 Gateway
+```
 
-#### 2026-03-31
-1. CoPaw 版：升级至最新 1.0.0 版本
+### 更换模型
 
-#### 2026-03-29
-1. OpenClaw 升级至最新 2026.3.28 版本
+OpenClaw 配置文件位于 `/root/.openclaw/openclaw.json`，也可以使用 `openclaw configure` 交互式修改。当前镜像默认接入 ModelScope 免费模型：
 
-#### 2026-03-26
-1. OpenClaw 升级至最新 2026.3.24 版本
-2. CoPaw 版：升级至最新 0.2.0.post1 版本
+- 默认主模型：`Qwen/Qwen3.8-Flash-Next`
+- 备选模型：`DeepSeek-V4.1-Flash`、`Qwen/Qwen3.8-27B`、`stepfun-ai/Step-3.7-Flash`
 
-#### 2026-03-25
-1. OpenClaw 升级至最新 2026.3.23-2 版本
-2. CoPaw 版：升级至最新 0.2.0 版本、同步 OpenClaw 版 260324 的更新
+### HuggingFace 专属功能（`hf_edition`）
 
-#### 2026-03-24
-1. 支持 WebDAV 远程存储的通用自动备份/恢复特性
-2. 支持自定义配置 VNC 连接密码
-3. 内置应用新增 Ark 压缩包管理工具
-4. OpenClaw 升级至最新 2026.3.23 版本
-5. Chrome 浏览器升级至最新 146.0.7680.164 版本
+`hf_edition` 默认以无桌面模式运行，内置 Caddy 在 7860 端口统一提供以下服务：
 
-#### 2026-03-22
-1. 修复 `openclaw.json` 存在语法错误导致插件无法正常安装的问题
-2. Chrome 浏览器升级至最新 146.0.7680.153 版本
-3. CoPaw 版：同步 OpenClaw 版 260321-260322 的更新
+| 路径 | 功能 | 说明 |
+| --- | --- | --- |
+| `/` | OpenClaw 控制台 | 反代到容器内的 Gateway（18789） |
+| `/bzshell` | 在线终端 | 设置 `PRO_MODE=1` 后可用，基于 WebSocket + zsh，适合在 OpenClaw 进程异常时排查与恢复 |
+| `/bzfiles` | 在线文件管理 | 设置 `PRO_MODE=1` 后可用，基于 copyparty，可浏览、上传、下载 `/root` 下的文件 |
 
-#### 2026-03-21
-1. 支持 S3 远程存储的通用自动备份/恢复特性
-2. 优化实时自动备份执行逻辑
+访问地址形如：
 
-#### 2026-03-16
-1. 修复 OpenClaw 自我重启时总提示需要先升级 node 版本的问题
-2. 为方便使用，默认关闭自动锁屏的功能
-3. CoPaw 版：同步 OpenClaw 版 260314~260316 的所有更新，同时解决在 ModelScope（国际版）重启容器后无法恢复 CoPaw 配置的问题。
+- 在线终端：`https://<用户名>-<空间名>.hf.space/bzshell`
+- 在线文件管理：`https://<用户名>-<空间名>.hf.space/bzfiles`
 
-#### 2026-03-15
-1. 新增 `SKIP_RESTORE` 环境变量，其值设置为 1 时，容器启动时不会自动恢复 OpenClaw 历史配置，同时停用相关配置目录的自动备份功能和禁止执行用户自定义的启动脚本
-2. OpenClaw 升级至最新 2026.3.13 版本
-3. Chrome 浏览器升级至最新 146.0.7680.80 版本
+> 若设置 `DISABLE_DESKTOP=0` 切换为桌面模式，7860 端口会变为 noVNC 桌面，上述 `/bzshell`、`/bzfiles` 入口不再提供。
 
-#### 2026-03-14
-1. 优化容器启动流程，避免因 openclaw 配置错误导致容器关闭，进而无法进入桌面环境排查问题
+---
 
-#### 2026-03-13
-1. OpenClaw 升级至最新 2026.3.12 版本
-2. 新增 copaw_computer 版本，docker 镜像使用 ghcr.io/tunmax/openclaw_computer:copaw_latest
+## 📁 路径与端口速查
 
-#### 2026-03-12
-1. 解决手动点击网页文件时，Chrome 浏览器无法正常调起的问题
-2. 优化 noVNC 视窗显示，默认自动缩放系统画面至用户浏览器视窗大小
+| 端口 | 用途 | 暴露范围 |
+| --- | --- | --- |
+| `7860` | 浏览器访问入口（主镜像：noVNC 桌面；`hf_edition`：OpenClaw 控制台 / `/bzshell` / `/bzfiles`） | 对外 |
+| `5901` | TigerVNC（noVNC 的后端） | 容器内部 |
+| `18789` | OpenClaw Gateway / 控制台 | 仅容器 loopback |
 
-#### 2026-03-11
-1. 降低 OpenClaw 在执行自我重启操作时的失败概率
-2. 解决深度重启创空间后，浏览器可能无法正常连接 openclaw web-ui，需手动在网关 url 后面添加 `&token=xxx` 的问题
-3. Chrome 浏览器升级至最新 146 版本
+| 路径 | 说明 |
+| --- | --- |
+| `/entrypoint.sh` | 容器入口脚本（启动编排） |
+| `/bz/lib/*.sh` | 启动流程实现（`common` / `desktop` / `openclaw` / `sync`） |
+| `/bz/sync_init.sh`、`/bz/sync_daemon.sh`、`/bz/auto_recover.sh` | 备份/恢复手动入口 |
+| `/bz/rules.txt`、`/bz/watch.txt` | 备份过滤规则 / 实时监听列表 |
+| `/root/.openclaw` | OpenClaw 配置与数据 |
+| `/root/.openclaw_origin` | 出厂配置副本 |
+| `/root/bz-startup/main.sh` | 用户自定义启动脚本 |
+| `/mnt/workspace` | 持久化目录（本地备份根） |
+| `/root/Desktop/使用帮助.html` | 桌面使用帮助 |
 
-#### 2026-03-10
-1. 新增支持自定义启动脚本，便于在容器休眠/重启后自动恢复指定进程，相关脚本代码需写在 `/root/bz-startup/main.sh` 文件中
-2. 新增支持 ModelScope 容器自动实时备份/重启后自动恢复的路径：`/root/bz-startup`, `/root/.codex`, `/root/.claude`
-3. 修复 ModelScope 用户名称加上创空间英文名称长度超过27个字符时可能导致 OpenClaw 启动失败的问题
+---
 
-#### 2026-03-09
-1. 将 npm 仓库官方源更改为国内源（registry.npmmirror.com），npm 下载安装模块速度可拉满
-2. OpenClaw 升级至最新 2026.3.8 版本
-3. 进一步压缩减小了镜像体积
+## ❓ 常见问题（FAQ）
 
-#### 2026-03-08
-1. 现已支持 ModelScope 容器在休眠/重启（含深度重启）后自动恢复 OpenClaw 的配置信息（目录：/root/.openclaw）,不用担心重启后配置可能丢失的问题。同时，以下目录及文件也会自动恢复：桌面目录（/root/Desktop）、zsh 历史记录文件（/root/.zsh_history）  
-**实现原理**：系统会利用 `inotifywait` 命令实时监控上述文件夹及文件的变化，当发生变化时，会立即使用 `rsync` 命令将最新版本的文件同步到 ModelScope 的 `/mnt/workspace` 持久化存储路径下；而在系统刚启动时，会检查 `/mnt/workspace` 目录下是否存在可恢复的文件夹及文件，如果存在则会执行恢复操作，恢复完成后才会启动 openclaw gateway
-2. OpenClaw 升级至最新 2026.3.7 版本
-3. 压缩减小了镜像体积
+**1. 容器重启后数据会丢吗？**
 
-Made with ❤️ by 百泽牧
+取决于备份后端：
+
+- **ModelScope 创空间**：`/mnt/workspace` 是持久化目录，默认自动恢复；注意同一账号下不同创空间之间不互通。
+- **HuggingFace Spaces**：默认没有持久化存储，需要把 Bucket 挂载到 `/mnt/workspace`，或配置 S3 / WebDAV。
+- **本地 Docker**：需要把卷挂载到 `/mnt/workspace`，否则容器重启后数据会丢。
+- **S3 / WebDAV**：配置后可在任何平台恢复，推荐需要长期保存的用户使用。
+
+**2. OpenClaw 配置错误导致容器无限重启、无法进入桌面怎么办？**
+
+设置环境变量 `SKIP_RESTORE=1`，以纯净模式启动（跳过历史配置恢复、实时备份和自定义启动脚本），进入桌面修复配置后，再移除该变量重启。
+
+**3. 如何更新到最新镜像？**
+
+- **ModelScope**：在「空间管理」中点击「重新部署」，会自动拉取最新镜像。
+- **本地 Docker**：`docker pull ghcr.io/tunmax/openclaw_computer:latest` 后重建容器。
+
+**4. Chrome 没有打开 OpenClaw 控制台 / 提示 token 无效？**
+
+在终端执行 `openclaw dashboard`，它会读取当前配置中的 token 并打开控制台；也可以 `openclaw dashboard --no-open` 只打印链接。
+
+**5. 为什么有时候用起来很卡？**
+
+ModelScope / HuggingFace 的免费 2 核 16GB 配置**没有 SLA**，高峰期（一般是晚上）闲置资源少就会卡，低峰期则流畅。本容器已默认关闭 KDE 全部特效以保证流畅度。
+
+**6. 如何切换中英文输入法？**
+
+鼠标点击输入框后，按 `Ctrl + Shift` 切换。
+
+**7. 如何把外面的文字粘贴进容器？**
+
+点击屏幕最左侧工具栏的第 3 个按钮调出剪贴板，输入或粘贴文字后，即可在容器内 `Ctrl + V`。
+
+**8. 云端备份恢复失败，容器起不来怎么办？**
+
+这是有意设计的安全保护：远端已配置但下载/解包失败时会终止启动。请先对云端配置文件做好拷贝备份，检查 S3/WebDAV 配置后重启容器重试；急需进入桌面时可先用 `SKIP_RESTORE=1`。
+
+**9. 创空间被自动休眠后，桌面上的文件还在吗？**
+
+ModelScope 长时间无操作会休眠容器。`/mnt/workspace` 中的备份会保留，容器唤醒后自动恢复；而备份范围之外的文件可能丢失。
+
+**10. HuggingFace 上 OpenClaw 起不来 / 服务异常，怎么排查？**
+
+在 Space 设置中把 `PRO_MODE` 设为 `1` 并重启，然后访问 `https://<用户名>-<空间名>.hf.space/bzshell` 使用在线终端查看日志、修复配置；也可以访问 `/bzfiles` 在线管理文件。
+
+---
+
+## ⚠️ 重要提醒
+
+- **请勿在 ModelScope / HuggingFace 等平台部署内网穿透相关服务。** 根据有关案例，平台检测到此类服务后可能会删除容器并停止账号。
+- 免费实例没有 SLA，**请勿存放重要且无备份的数据**；建议把「是否公开」设为非公开，并设置 `ROOT_PASSWD` / `VNC_PASSWD`。
+- 容器默认以 root 运行，OpenClaw 在容器内拥有完整工具权限（执行命令、操作浏览器等）。请勿将桌面地址分享给他人，并注意使用边界。
+
+---
+
+## 📦 镜像与版本
+
+### 当前维护
+
+| 镜像 | 说明 |
+| --- | --- |
+| `ghcr.io/tunmax/openclaw_computer:latest` | 主镜像（OpenClaw 版），适配 ModelScope、本地 Docker 等场景 |
+| `ghcr.io/tunmax/openclaw_computer:hf_edition` | HuggingFace Spaces 专属镜像，支持 `PRO_MODE` 专业模式（在线终端 / 在线文件管理） |
+| `ghcr.io/tunmax/openclaw_computer:20261011.post1` 等日期标签 | 固定版本，便于回滚 |
+
+当前主镜像主要组件：OpenClaw `2026.10.1` · Node.js `v24.21.0` · Google Chrome `155` · KDE Plasma `5.27` · Debian 12。
+
+### 已停止维护的历史镜像（仅存档）
+
+> ⚠️ 以下镜像已停止更新，不建议新用户使用；相关部署教程仅作历史参考。
+
+| 镜像 | 说明 | 最后更新 |
+| --- | --- | --- |
+| `qwenpaw_latest` | QwenPaw 版镜像（原 CoPaw 改名而来） | 2026-06-02 |
+| `hermes_latest` | Hermes 版镜像 | 2026-06-02 |
+
+仍在使用上述镜像的用户，建议迁移到 `latest` 主镜像；对应的历史版本标签（如 `qwenpaw_20260602`）仍可在 GHCR 拉取。
+
+---
+
+## 🛠️ 附：容器启动时发生了什么（给好奇的人）
+
+`/entrypoint.sh` 的完整流程（实现拆分在 `/bz/lib/`）：
+
+1. **初始化环境**：设置 `zh_CN.UTF-8` locale、`DISPLAY=:1`，检查 `vncserver / websockify / curl / jq` 等必需命令。
+2. **启动桌面**：
+   - 清理上次残留的 VNC 进程与 X 锁文件；
+   - 启动 TigerVNC（`:1`，端口 `5901`，默认 `1920x1080`；设置 `VNC_PASSWD` 时启用密码认证）；
+   - 等待 VNC 就绪，加载 DBus 会话环境（`/tmp/dbus-session.env`）；
+   - 启动 noVNC / websockify（`0.0.0.0:7860`），即浏览器访问入口。
+3. **设置 root 密码**：`ROOT_PASSWD`（默认 `123456`）。
+4. **恢复配置 & 启动实时备份**（`SKIP_RESTORE=1` 时整步跳过）：
+   - 保存出厂配置副本 `/root/.openclaw_origin`（`KEEP_ORIGINAL_CONF=1` 时）；
+   - 按 S3 > WebDAV > 本地 `/mnt/workspace` 的优先级恢复历史配置；
+   - 执行用户自定义启动脚本 `/root/bz-startup/main.sh`；
+   - 后台启动实时备份守护 `/bz/sync_daemon.sh`；
+   - ⚠️ 已配置远端备份但恢复失败时，容器**终止启动**并提示。
+5. **启动 OpenClaw Gateway**：
+   - 将 `openclaw.json`（JSON5）格式化为标准 JSON；
+   - 执行 `openclaw doctor --fix --yes`；
+   - `openclaw gateway --force run` 监听 `127.0.0.1:18789`，并等待端口与 HTTP 就绪（日志：`/tmp/openclaw_gateway.log`）。
+6. **打开 Chrome**：自动打开控制台 `http://127.0.0.1:18789/#token=...` 与桌面「使用帮助.html」。
+7. **守候**：进入守候状态；收到停止信号时依次清理 VNC / noVNC / Gateway / 备份守护进程后退出。
+
+> 🎭 **演示模式**：当主机名包含 `-brianzhou-` 时，容器会应用 noVNC 只读补丁并清理本地持久化目录 —— 这是项目演示空间的专用逻辑，普通部署不会触发。
+>
+> 🐳 **hf_edition 的启动差异**：默认不启动桌面（`DISABLE_DESKTOP=1`），改为启动 Xvfb + Caddy，由 7860 端口反代 OpenClaw 控制台；`PRO_MODE=1` 时额外启动在线终端与在线文件管理；设置 `DISABLE_DESKTOP=0` 则切换为主镜像同款桌面流程。
+
+---
+
+## 📜 更新日志（最近）
+
+### 2026-10-11
+
+- 🧱 使用 Agent 对容器启动脚本进行工程化重构，能力拆分至 `/bz/lib/*`，启动更健壮、更易维护
+- 🤖 新增内置 [Pi Agent](https://pi.dev/)（桌面图标一键启动）
+- 📤 新增 [croc](https://getcroc.com/) 命令，方便不同电脑之间互传文件
+- ⬆️ OpenClaw 升级至 2026.10.1
+
+> 完整更新历史见 [GitHub 提交记录](https://github.com/TunMax/openclaw_computer/commits/master)。
+
+---
+
+## 🔗 相关链接
+
+| 资源 | 地址 |
+| --- | --- |
+| OpenClaw 官方中文文档 | https://docs.openclaw.ai/zh-CN |
+| ModelScope 创空间（推荐部署） | https://www.modelscope.cn/studios/BrianZhou/openclaw_computer |
+| GitHub 仓库 | https://github.com/TunMax/openclaw_computer |
+| Pi Agent | https://pi.dev/ |
+| croc | https://getcroc.com/ |
+| 中科院数据胶囊（免费 20GB S3/WebDAV） | https://data.cstcloud.cn |
