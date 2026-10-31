@@ -16,7 +16,7 @@
 | 🤖 **开箱即用的 OpenClaw** | 默认接入 ModelScope 免费推理模型，只需提供一个访问令牌 |
 | 🌐 **Google Chrome** | 启动后自动打开 OpenClaw 控制台，即开即用 |
 | ⌨️ **中文输入法** | Fcitx5 拼音，`Ctrl + Shift` 切换中英文 |
-| 🧰 **常用软件齐全** | Konsole 终端、Dolphin 文件管理器、VS Code、Ark 解压工具、htop、tmux、zsh、croc 等 |
+| 🧰 **常用软件齐全** | Konsole 终端、Dolphin 文件管理器、Ark 解压工具、htop、tmux、zsh、croc 等 |
 | 🧠 **内置 Pi Agent** | 桌面图标一键打开 AI 编程助手，默认复用 ModelScope 模型 |
 | 💾 **自动备份 / 恢复** | 支持本地持久化目录、S3、WebDAV 三种后端，实时监听文件变化并同步 |
 | 🧹 **纯净模式** | 一条环境变量即可跳过恢复与备份，专治「配置错误起不来」 |
@@ -449,6 +449,13 @@ ModelScope 长时间无操作会休眠容器。`/mnt/workspace` 中的备份会�
 ---
 
 ## 📜 更新日志（最近）
+
+### 2026-10-31
+
+- Node.js 升级至 v26.13.0 / Pi 升级至 v1.4.0 / OpenClaw 升级至 2026.10.9
+- OpenClaw 本地 Embedding 模型切换为 `jina-embeddings-v5-text-nano-retrieval-Q4_K_M.gguf`
+- 新增显示模型输出速度的 Pi 插件
+- 关闭文件夹管理器顶栏根用户提醒的占位提示
 
 ### 2026-10-11
 
